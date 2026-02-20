@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>DOM Practice - Notes</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --text: #212529;
+            --card: white;
+            --border: #dee2e6;
+            --primary: #0d6efd;
+            --danger: #dc3545;
+            --success: #198754;
+        }
+
+        [data-theme="dark"] {
+            --bg: #212529;
+            --text: #e9ecef;
+            --card: #343a40;
+            --border: #495057;
+            --primary: #6ea8fe;
+            --danger: #ff6b6b;
+            --success: #51cf66;
+        }
+
+        body {
+            font-family: system-ui;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #theme-toggle {
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        #theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #note-input {
+            flex: 1;
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--card);
+            color: var(--text);
+        }
+
+        #add-btn {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #add-btn:hover {
+            opacity: 0.9;
+        }
+
+        #search {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--card);
+            color: var(--text);
+            box-sizing: border-box;
+        }
+
+        #notes-list {
+            list-style: none;
+            display: grid;
+            gap: 12px;
+            padding: 0;
+        }
+
+        .note {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            cursor: grab;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .note:active {
+            cursor: grabbing;
+        }
+
+        .note.completed .text {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .note.dragging {
+            opacity: 0.4;
+            transform: scale(0.98);
+        }
+
+        .text {
+            font-size: 1rem;
+            word-break: break-all;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .btn-complete {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+        }
+
+        .color-picker {
+            width: 32px;
+            height: 32px;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-box {
+            background: var(--card);
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+        }
+
+        #modal.show .modal-box {
+            transform: translateY(0);
+        }
+
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* Edit input style */
+        .edit-input {
+            width: 100%;
+            padding: 8px;
+            font-size: 1rem;
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Notes Manager</h1>
+            <button id="theme-toggle">Dark Mode</button>
+        </header>
+
+        <form id="note-form">
+            <input id="note-input" placeholder="Type your note..." required autocomplete="off" />
+            <button id="add-btn">Add</button>
+        </form>
+
+        <input id="search" placeholder="Search notes..." />
+
+        <ul id="notes-list">
+            <!-- Notes will be injected here -->
+        </ul>
+
+        <p id="empty-msg" style="text-align:center; opacity:0.6; margin-top:20px;">No notes yet. Add one above!</p>
+
+        <button id="clear-completed"
+            style="margin-top:20px; background:var(--danger); color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; display:none;">
+            Clear Completed
+        </button>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal">
+        <div class="modal-box">
+            <h2>Clear all completed notes?</h2>
+            <p>This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button id="modal-no" class="btn" style="background:#6c757d; color:white;">No</button>
+                <button id="modal-yes" class="btn" style="background:var(--danger); color:white;">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const noteForm = document.getElementById('note-form');
+        const noteInput = document.getElementById('note-input');
+        const notesList = document.getElementById('notes-list');
+        const searchInput = document.getElementById('search');
+        const themeToggle = document.getElementById('theme-toggle');
+        const emptyMsg = document.getElementById('empty-msg');
+        const clearCompletedBtn = document.getElementById('clear-completed');
+        const modal = document.getElementById('modal');
+        const modalYes = document.getElementById('modal-yes');
+        const modalNo = document.getElementById('modal-no');
+
+        // --- State / Helpers ---
+        let dragSrcEl = null;
+
+        function toggleEmptyMsg() {
+            const hasNotes = notesList.children.length > 0;
+            emptyMsg.style.display = hasNotes ? 'none' : 'block';
+
+            // Check if we have any completed notes to show/hide the clear button
+            const hasCompleted = document.querySelectorAll('.note.completed').length > 0;
+            clearCompletedBtn.style.display = hasCompleted ? 'block' : 'none';
+        }
+
+        // --- 1. Add Note ---
+        noteForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = noteInput.value.trim();
+            if (!text) return;
+
+            createNoteElement(text);
+            noteInput.value = '';
+            toggleEmptyMsg();
+        });
+
+        function createNoteElement(text) {
+            const li = document.createElement('li');
+            li.className = 'note';
+            li.draggable = true;
+            li.dataset.id = Date.now(); // Simple ID
+
+            li.innerHTML = `
+      <div class="text">${escapeHtml(text)}</div>
+      <div class="actions">
+        <input type="color" class="color-picker" value="#ffffff" title="Change Color">
+        <button type="button" class="btn btn-complete">✔</button>
+        <button type="button" class="btn btn-delete">🗑</button>
+      </div>
+    `;
+
+            // Add drag events
+            addDragEvents(li);
+
+            // Prepend to list (newest first)
+            notesList.prepend(li);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // --- 2. Event Delegation (Delete, Complete, Color, Edit) ---
+        notesList.addEventListener('click', (e) => {
+            const target = e.target;
+            const note = target.closest('.note');
+            if (!note) return;
+
+            // Delete
+            if (target.closest('.btn-delete')) {
+                note.remove();
+                toggleEmptyMsg();
+            }
+
+            // Complete
+            if (target.closest('.btn-complete')) {
+                note.classList.toggle('completed');
+                toggleEmptyMsg(); // To update clear button visibility
+            }
+        });
+
+        // Color Picker Change
+        notesList.addEventListener('input', (e) => {
+            if (e.target.classList.contains('color-picker')) {
+                const note = e.target.closest('.note');
+                note.style.backgroundColor = e.target.value;
+                // Adjust text color for contrast if needed (optional advanced feature, skipping for simplicity)
+            }
+        });
+
+        // Double Click to Edit
+        notesList.addEventListener('dblclick', (e) => {
+            const textDiv = e.target.closest('.text');
+            if (!textDiv || e.target.tagName === 'INPUT') return; // Avoid input itself
+
+            const currentText = textDiv.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'edit-input';
+            input.value = currentText;
+
+            textDiv.innerHTML = '';
+            textDiv.appendChild(input);
+            input.focus();
+
+            // Save on blur or enter
+            function saveEdit() {
+                const newText = input.value.trim() || currentText; // Revert if empty
+                textDiv.textContent = newText;
+            }
+
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter') {
+                    saveEdit();
+                }
+            });
+        });
+
+        // --- 3. Drag & Drop ---
+        function addDragEvents(note) {
+            note.addEventListener('dragstart', handleDragStart);
+            note.addEventListener('dragover', handleDragOver);
+            note.addEventListener('dragenter', handleDragEnter);
+            note.addEventListener('dragleave', handleDragLeave);
+            note.addEventListener('drop', handleDrop);
+            note.addEventListener('dragend', handleDragEnd);
+        }
+
+        function handleDragStart(e) {
+            this.style.opacity = '0.4';
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            this.classList.add('dragging');
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) e.stopPropagation();
+
+            const recipient = this.closest('.note');
+            if (dragSrcEl !== recipient) {
+                // Logic to reorder DOM
+                // Find where to drop based on mouse position relative to center of recipient
+                const rect = recipient.getBoundingClientRect();
+                const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+
+                // If dropping on self, do nothing
+                // We insert logic: 
+                notesList.insertBefore(dragSrcEl, next ? recipient.nextSibling : recipient);
+            }
+            return false;
+        }
+
+        function handleDragEnd() {
+            this.style.opacity = '1';
+            this.classList.remove('dragging');
+
+            // Cleanup classes
+            document.querySelectorAll('.note').forEach(note => {
+                note.classList.remove('over');
+            });
+        }
+
+        // Improved Drag & Drop for list reordering using `dragover` calculation
+        notesList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(notesList, e.clientY);
+            const draggable = document.querySelector('.dragging');
+            if (draggable) {
+                if (afterElement == null) {
+                    notesList.appendChild(draggable);
+                } else {
+                    notesList.insertBefore(draggable, afterElement);
+                }
+            }
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.note:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // --- 4. Live Search ---
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const notes = document.querySelectorAll('.note');
+
+            notes.forEach(note => {
+                const text = note.querySelector('.text').textContent.toLowerCase();
+                if (text.includes(term)) {
+                    note.style.display = 'flex';
+                } else {
+                    note.style.display = 'none';
+                }
+            });
+        });
+
+        // --- 5. Theme Toggle ---
+        themeToggle.addEventListener('click', () => {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+            html.setAttribute('data-theme', newTheme);
+            themeToggle.textContent = newTheme === 'light' ? 'Dark Mode' : 'Light Mode';
+        });
+
+        // --- 6. Clear Completed Modal ---
+        clearCompletedBtn.addEventListener('click', () => {
+            modal.classList.add('show');
+            modal.style.display = 'flex'; // Ensure display flex override
+        });
+
+        function closeModal() {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                if (!modal.classList.contains('show')) modal.style.display = 'none';
+            }, 300); // wait for transition
+        }
+
+        modalNo.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        modalYes.addEventListener('click', () => {
+            const completedNotes = document.querySelectorAll('.note.completed');
+            completedNotes.forEach(note => note.remove());
+            closeModal();
+            toggleEmptyMsg();
+        });
+
+        // Initial check
+        toggleEmptyMsg();
+
+    </script>
+    <script src="objectandarray.js"></script>
+</body>
+
+</html>
