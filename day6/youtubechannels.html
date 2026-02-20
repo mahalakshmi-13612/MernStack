@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>YouTube Channels CRUD</title>
+  <style>
+    body {
+      font-family: Arial;
+      margin: 40px;
+      background: #f4f4f4;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+    }
+    .card {
+      background: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    button {
+      cursor: pointer;
+    }
+    .delete { background: #ff4d4d; color: white; border: none; }
+    .edit { background: #2196f3; color: white; border: none; }
+    .save { background: #4CAF50; color: white; border: none; }
+  </style>
+</head>
+<body>
+
+<h2>YouTube Channels CRUD</h2>
+
+<h3>Add New Channel</h3>
+<input type="text" id="channelName" placeholder="Channel Name">
+<input type="text" id="handle" placeholder="Handle">
+<input type="text" id="country" placeholder="Country">
+<input type="number" id="subscribers" placeholder="Subscribers">
+<input type="number" id="views" placeholder="Total Views">
+<input type="number" id="videos" placeholder="Video Count">
+<button onclick="addChannel()">Add Channel</button>
+
+<hr>
+
+<h3>All Channels</h3>
+<div id="channelList"></div>
+
+<script>
+const API_URL = "http://localhost:3000/youtubeChannels";
+
+// Fetch all channels
+async function fetchChannels() {
+  const res = await fetch(API_URL);
+  const data = await res.json();
+  displayChannels(data);
+}
+
+// Display channels
+function displayChannels(channels) {
+  const list = document.getElementById("channelList");
+  list.innerHTML = "";
+
+  channels.forEach(channel => {
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <strong>${channel.channelName}</strong> (${channel.handle}) <br>
+      Country: ${channel.country} <br>
+      Subscribers: ${channel.statistics.subscribers} <br>
+      Views: ${channel.statistics.totalViews} <br>
+      Videos: ${channel.statistics.videoCount} <br><br>
+      <button class="edit" onclick="editChannel('${channel.id}')">Edit</button>
+      <button class="delete" onclick="deleteChannel('${channel.id}')">Delete</button>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+// Add channel
+async function addChannel() {
+  const newChannel = {
+    channelName: document.getElementById("channelName").value,
+    handle: document.getElementById("handle").value,
+    country: document.getElementById("country").value,
+    createdAt: new Date().toISOString(),
+    isVerified: false,
+    statistics: {
+      subscribers: Number(document.getElementById("subscribers").value),
+      totalViews: Number(document.getElementById("views").value),
+      videoCount: Number(document.getElementById("videos").value)
+    }
+  };
+
+  await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(newChannel)
+  });
+
+  fetchChannels();
+}
+
+// Delete channel
+async function deleteChannel(id) {
+  await fetch(`${API_URL}/${id}`, {
+    method: "DELETE"
+  });
+
+  fetchChannels();
+}
+
+// Edit channel (simple prompt-based update)
+async function editChannel(id) {
+  const name = prompt("Enter new channel name:");
+  if (!name) return;
+
+  await fetch(`${API_URL}/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ channelName: name })
+  });
+
+  fetchChannels();
+}
+
+// Initial load
+fetchChannels();
+</script>
+
+</body>
+</html>

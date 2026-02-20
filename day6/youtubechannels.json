@@ -1,0 +1,46 @@
+{
+  "youtubeChannels": [
+    {
+      "channelId": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+      "channelName": "Google Developers",
+      "handle": "@GoogleDevelopers",
+      "description": "Development tools, APIs, and best practices from Google.",
+      "country": "US",
+      "createdAt": "2007-08-23T00:00:00Z",
+      "statistics": {
+        "subscribers": 2750000,
+        "totalViews": 210000000,
+        "videoCount": 5200
+      },
+      "isVerified": true
+    },
+    {
+      "channelId": "UC295-Dw_tDNtZXFeAPAW6Aw",
+      "channelName": "Traversy Media",
+      "handle": "@TraversyMedia",
+      "description": "Web development and programming tutorials.",
+      "country": "US",
+      "createdAt": "2009-10-30T00:00:00Z",
+      "statistics": {
+        "subscribers": 2200000,
+        "totalViews": 180000000,
+        "videoCount": 900
+      },
+      "isVerified": true
+    },
+    {
+      "channelId": "UCW5YeuERMmlnqo4oq8vwUpg",
+      "channelName": "freeCodeCamp.org",
+      "handle": "@freecodecamp",
+      "description": "Learn to code for free with programming tutorials.",
+      "country": "US",
+      "createdAt": "2014-12-16T00:00:00Z",
+      "statistics": {
+        "subscribers": 8500000,
+        "totalViews": 750000000,
+        "videoCount": 1500
+      },
+      "isVerified": true
+    }
+  ]
+}
