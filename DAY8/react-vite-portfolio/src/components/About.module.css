@@ -1,0 +1,12 @@
+.aboutSection {
+  background-color: #f3f4f6;
+  padding: 50px;
+}
+
+.aboutSection h2 {
+  color: #1e3a8a;
+}
+
+.aboutSection ul {
+  margin-left: 20px;
+}
