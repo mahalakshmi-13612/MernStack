@@ -1,0 +1,18 @@
+{
+  "youtubeChannels": [
+    {
+      "id": "1",
+      "channelName": "Google Developers",
+      "category": "Technology",
+      "subscribers": "2500000",
+      "createdAt": "2007"
+    },
+    {
+      "id": "2",
+      "channelName": "FreeCodeCamp",
+      "category": "Programming",
+      "subscribers": "9000000",
+      "createdAt": "2014"
+    }
+  ]
+}
